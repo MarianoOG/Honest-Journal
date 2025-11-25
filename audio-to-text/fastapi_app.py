@@ -8,8 +8,8 @@ It includes API key authentication and multi-language support via faster-whisper
 import logging
 import torch
 import os
+import secrets
 from contextlib import asynccontextmanager
-from io import BytesIO
 from fastapi import FastAPI, HTTPException, Security
 from fastapi.security import APIKeyHeader
 import uvicorn
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Environment Variables
 load_dotenv()
-DEVICE = os.environ.get("DEVICE")
+AUDIO_TO_TEXT_API_KEY = os.environ.get("AUDIO_TO_TEXT_API_KEY")
 PROJECT_NAME = os.environ.get("PROJECT_NAME")
 BUCKET_NAME = os.environ.get("BUCKET_NAME")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "LOCAL")
@@ -78,7 +78,7 @@ def verify_api_key(api_key: str = Security(api_key_header)):
     Validate API key from request header.
 
     Ensures that incoming requests include a valid API key in the X-API-Key header
-    for secure access to the transcription service.
+    for secure access to the transcription service. Uses timing-attack-safe comparison.
 
     Args:
         api_key: The API key provided in the request header
@@ -92,7 +92,8 @@ def verify_api_key(api_key: str = Security(api_key_header)):
             detail="API Key required. Please provide X-API-Key header."
         )
 
-    if api_key != os.environ.get("AUDIO_TO_TEXT_API_KEY", ""):
+    expected_key = os.environ.get("AUDIO_TO_TEXT_API_KEY", "")
+    if not secrets.compare_digest(api_key, expected_key):
         raise HTTPException(
             status_code=401,
             detail="Invalid API Key"
@@ -106,23 +107,51 @@ async def lifespan(_: FastAPI):
     """
     Manage application lifespan events.
 
-    On startup, initializes the Whisper model with appropriate device and compute type
-    based on the MODEL_SIZE environment variable. Uses CUDA and float16 for large models,
-    CPU and int8 for smaller models to optimize performance and memory usage.
-
-    Also initializes the GCP storage client for accessing audio files from Cloud Storage.
+    On startup, validates required environment variables, initializes the Whisper model,
+    and sets up the GCP storage client for accessing audio files from Cloud Storage.
     """
     global model, storage_client, bucket
-    
-    if ENVIRONMENT == 'PROD':
-        model = whisper.load_model("models/large-v3-turbo.pt")
-    else:
-        model = whisper.load_model("models/small.pt")
-    
+
+    # Validate required environment variables
+    logger.info("Validating required environment variables...")
+    required_vars = {
+        "AUDIO_TO_TEXT_API_KEY": AUDIO_TO_TEXT_API_KEY,
+        "PROJECT_NAME": PROJECT_NAME,
+        "BUCKET_NAME": BUCKET_NAME,
+    }
+
+    missing_vars = [name for name, value in required_vars.items() if not value]
+    if missing_vars:
+        error_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
+
+    logger.info(f"Environment: {ENVIRONMENT}")
+    logger.info(f"Configuration: PROJECT_NAME={PROJECT_NAME}, BUCKET_NAME={BUCKET_NAME}")
+
+    # Load Whisper model
+    try:
+        model_name = "large-v3-turbo" if ENVIRONMENT == 'PROD' else "small"
+        model_path = f"models/{model_name}.pt"
+
+        # Check if model file exists
+        if not os.path.exists(model_path):
+            logger.warning(f"Model file not found at {model_path}. Attempting to load model...")
+
+        logger.info(f"Loading Whisper model: {model_name}")
+        model = whisper.load_model(model_path)
+        logger.info(f"Successfully loaded Whisper model: {model_name}")
+    except Exception as e:
+        error_msg = f"Failed to load Whisper model: {e}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
     # Initialize GCP storage client
     try:
+        logger.info("Initializing GCP storage client...")
         storage_client = storage.Client(project=PROJECT_NAME)
         bucket = storage_client.bucket(BUCKET_NAME)
+        logger.info(f"Successfully initialized GCP storage client for bucket: {BUCKET_NAME}")
     except Exception as e:
         logger.warning(f"Failed to initialize GCP storage client: {e}")
 
@@ -188,7 +217,7 @@ def health():
     response_model=TranscriptionResponse,
     dependencies=[Security(verify_api_key)]
 )
-async def transcribe(audio_id: str):
+def transcribe(audio_id: str):
     """
     Transcribe audio file from GCP Cloud Storage to text.
 
@@ -209,6 +238,7 @@ async def transcribe(audio_id: str):
         HTTPException: 401 if API key is invalid
     """
     if not model:
+        logger.error("Whisper model not initialized")
         raise HTTPException(
             status_code=500,
             detail="Whisper model not initialized. Please try again later."
@@ -221,6 +251,7 @@ async def transcribe(audio_id: str):
         )
 
     if not bucket:
+        logger.error("GCP storage bucket not initialized")
         raise HTTPException(
             status_code=500,
             detail="GCP storage bucket not initialized. Please try again later."
@@ -260,6 +291,8 @@ async def transcribe(audio_id: str):
         options = whisper.DecodingOptions()
         result = whisper.decode(model, mel, options)
 
+        logger.info(f"Transcription successful for audio_id: {audio_id}. Language: {detected_language}")
+
         return {
             "detected_language": detected_language,
             "language_probability": language_probability,
@@ -269,6 +302,7 @@ async def transcribe(audio_id: str):
         # Re-raise HTTPExceptions as-is
         raise
     except Exception as e:
+        logger.error(f"Failed to transcribe audio ({audio_id}): {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to transcribe audio: {str(e)}"
