@@ -1,12 +1,12 @@
 # From https://github.com/fentresspaul61B/Deploy-Whisper-On-GCP
 # Updated Dockerfile which loads model in mem.
-FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-runtime
+FROM pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime
 ARG ENVIRONMENT=LOCAL
 WORKDIR /app
-RUN apt-get update && apt-get install -y ffmpeg && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ffmpeg build-essential && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir models
 RUN if [ "$ENVIRONMENT" = "PROD" ]; then \
