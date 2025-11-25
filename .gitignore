@@ -34,6 +34,7 @@ ENV/
 .env
 .venv/
 data/
+*/models/*
 
 # Local development
 *.log

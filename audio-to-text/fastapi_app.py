@@ -6,6 +6,7 @@ It includes API key authentication and multi-language support via faster-whisper
 """
 
 import logging
+import torch
 import os
 from contextlib import asynccontextmanager
 from io import BytesIO
@@ -14,8 +15,10 @@ from fastapi.security import APIKeyHeader
 import uvicorn
 from dotenv import load_dotenv
 from google.cloud import storage
-from faster_whisper import WhisperModel
 from pydantic import BaseModel
+import numpy as np
+import ffmpeg
+import whisper
 
 # Configure logging
 logging.basicConfig(
@@ -35,6 +38,37 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "LOCAL")
 model = None
 storage_client = None
 bucket = None
+
+# From: https://github.com/openai/whisper/discussions/908#discussioncomment-5429636
+# Aux load bytes function
+def load_audio(file_bytes: bytes, sr: int = 16_000) -> np.ndarray:
+    """
+    Use file's bytes and transform to mono waveform, resampling as necessary
+    Parameters
+    ----------
+    file: bytes
+        The bytes of the audio file
+    sr: int
+        The sample rate to resample the audio if necessary
+    Returns
+    -------
+    A NumPy array containing the audio waveform, in float32 dtype.
+    """
+    try:
+        # This launches a subprocess to decode audio while down-mixing and resampling as necessary.
+        # Requires the ffmpeg CLI and `ffmpeg-python` package to be installed.
+        out, _ = (
+            ffmpeg.input('pipe:', threads=0)
+            .output("pipe:", format="s16le", acodec="pcm_s16le", ac=1, ar=sr)
+            .global_args('-loglevel', 'error')
+            .run_async(pipe_stdin=True, pipe_stdout=True)
+        ).communicate(input=file_bytes)
+
+    except ffmpeg.Error as e:
+        raise RuntimeError(f"Failed to load audio: {e.stderr.decode()}") from e
+
+    return np.frombuffer(out, np.int16).flatten().astype(np.float32) / 32768.0
+
 
 # API Key security
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -81,9 +115,9 @@ async def lifespan(_: FastAPI):
     global model, storage_client, bucket
     
     if ENVIRONMENT == 'PROD':
-        model = WhisperModel("large-v3", device="cpu", compute_type="int8")
+        model = whisper.load_model("models/large-v3-turbo.pt")
     else:
-        model = WhisperModel("medium", device="cpu", compute_type="int8")
+        model = whisper.load_model("models/small.pt")
     
     # Initialize GCP storage client
     try:
@@ -105,7 +139,7 @@ class TranscriptionResponse(BaseModel):
 
 app = FastAPI(lifespan=lifespan)
 app.title = "Reflection Journal - Audio To Text"
-app.version = "0.0.1"
+app.version = "0.0.2"
 
 
 @app.get(
@@ -140,7 +174,8 @@ def health():
         "services": {
             "model": "available" if model_ready else "unavailable",
             "bucket": "available" if bucket_ready else "unavailable"
-        }
+        },
+        "cuda": torch.cuda.is_available()
     }
 
 
@@ -204,21 +239,31 @@ async def transcribe(audio_id: str):
             )
 
         # Download file content to memory
-        audio_content = blob.download_as_bytes()
+        audio_bytes = blob.download_as_bytes()
 
-        # Wrap in BytesIO for processing
-        audio_bytes = BytesIO(audio_content)
+        # Load and process audio
+        audio = load_audio(audio_bytes)
+        audio = whisper.pad_or_trim(audio)
 
-        # Transcribe the audio from BytesIO
-        segments, info = model.transcribe(audio_bytes, beam_size=5)
+        # Create log-Mel spectrogram
+        mel = whisper.log_mel_spectrogram(
+            audio,
+            n_mels=128 if ENVIRONMENT == "PROD" else 80
+        ).to(model.device)
 
-        # Aggregate transcription from all segments
-        transcription = " ".join([segment.text.strip() for segment in segments])
+        # Detect the spoken language
+        _, probs = model.detect_language(mel)
+        detected_language = max(probs, key=probs.get)  # type: ignore
+        language_probability = probs[detected_language]  # type: ignore
+
+        # Decode the audio
+        options = whisper.DecodingOptions()
+        result = whisper.decode(model, mel, options)
 
         return {
-            "detected_language": info.language,
-            "language_probability": info.language_probability,
-            "transcription": transcription
+            "detected_language": detected_language,
+            "language_probability": language_probability,
+            "transcription": result.text  # type: ignore
         }
     except HTTPException:
         # Re-raise HTTPExceptions as-is
