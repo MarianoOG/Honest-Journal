@@ -10,9 +10,9 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir models
 RUN if [ "$ENVIRONMENT" = "PROD" ]; then \
-        python -c "import whisper; whisper.load_model('large-v3-turbo', download_root='/app/models')" \
+        python -c "import whisper; whisper.load_model('large-v3-turbo', download_root='/app/models')"; \
     else \
-        python -c "import whisper; whisper.load_model('small', download_root='/app/models')" \
+        python -c "import whisper; whisper.load_model('small', download_root='/app/models')"; \
     fi
 
 COPY fastapi_app.py /app/
