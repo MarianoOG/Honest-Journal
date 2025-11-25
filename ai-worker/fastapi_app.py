@@ -1,4 +1,5 @@
 from typing import List, Union
+import secrets
 from fastapi import FastAPI, HTTPException, Body, Security, BackgroundTasks
 from fastapi.security import APIKeyHeader
 import uvicorn
@@ -17,6 +18,12 @@ def verify_api_key(api_key: str = Security(api_key_header)):
     """
     Validate API key from request header.
 
+    Ensures that incoming requests include a valid API key in the X-API-Key header
+    for secure access to the analysis service. Uses timing-attack-safe comparison.
+
+    Args:
+        api_key: The API key provided in the request header
+
     Raises:
         HTTPException: 401 if API key is missing or invalid
     """
@@ -26,7 +33,8 @@ def verify_api_key(api_key: str = Security(api_key_header)):
             detail="API Key required. Please provide X-API-Key header."
         )
 
-    if api_key != settings.AI_WORKER_API_KEY:
+    expected_key = settings.AI_WORKER_API_KEY or ""
+    if not secrets.compare_digest(api_key, expected_key):
         raise HTTPException(
             status_code=401,
             detail="Invalid API Key"
