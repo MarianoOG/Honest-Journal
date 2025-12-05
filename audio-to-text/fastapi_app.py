@@ -167,7 +167,7 @@ class TranscriptionResponse(BaseModel):
 
 
 app = FastAPI(lifespan=lifespan)
-app.title = "Reflection Journal - Audio To Text"
+app.title = "Honest Journal - Audio To Text"
 app.version = "0.0.2"
 
 

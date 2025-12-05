@@ -37,15 +37,15 @@ jobs:
       - name: Build and Push Backend
         id: 'build-backend'
         run: |
-          docker build -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/backend:${{ github.sha }}" -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/backend:latest" ./backend
-          docker push "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/backend" --all-tags
+          docker build -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/backend:${{ github.sha }}" -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/backend:latest" ./backend
+          docker push "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/backend" --all-tags
 
       - name: Deploy Backend
         id: 'deploy-backend'
         run: |
-          gcloud run deploy reflection-journal-backend \
+          gcloud run deploy honest-journal-backend \
           --region ${{ secrets.LOCATION }} \
-          --image "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/backend:latest" \
+          --image "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/backend:latest" \
           --allow-unauthenticated \
           --min-instances=0 \
           --max-instances=1 \

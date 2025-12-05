@@ -37,15 +37,15 @@ jobs:
       - name: Build and Push AI Worker
         id: 'build-ai-worker'
         run: |
-          docker build -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/ai-worker:${{ github.sha }}" -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/ai-worker:latest" ./ai-worker
-          docker push "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/ai-worker" --all-tags
+          docker build -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/ai-worker:${{ github.sha }}" -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/ai-worker:latest" ./ai-worker
+          docker push "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/ai-worker" --all-tags
 
       - name: Deploy AI Worker
         id: 'deploy-ai-worker'
         run: |
-          gcloud run deploy reflection-journal-ai-worker \
+          gcloud run deploy honest-journal-ai-worker \
           --region ${{ secrets.LOCATION }} \
-          --image "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/ai-worker:latest" \
+          --image "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/ai-worker:latest" \
           --allow-unauthenticated \
           --min-instances=0 \
           --max-instances=1 \

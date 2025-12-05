@@ -76,7 +76,7 @@ def check_email(user_email: str, check_deliverability: bool = False) -> Optional
         return None
 
 def render_login():
-    st.title("📔 Reflection Journal - Login")
+    st.title("📔 Honest Journal - Login")
     
     # Toggle between login and register
     tab1, tab2 = st.tabs(["Login", "Register"])
@@ -232,12 +232,12 @@ def main():
         return
     
     # Title
-    st.title("📔 Reflection Journal")
+    st.title("📔 Honest Journal")
     
     # Render reflections
     render_reflections()
     render_sidebar_footer()
 
 if __name__ == "__main__":
-    st.set_page_config(layout="centered", page_icon="📔", page_title="Reflection Journal")
+    st.set_page_config(layout="centered", page_icon="📔", page_title="Honest Journal")
     main()

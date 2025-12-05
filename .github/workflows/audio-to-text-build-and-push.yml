@@ -37,15 +37,15 @@ jobs:
       - name: Build and Push Audio to Text
         id: 'build-audio-to-text'
         run: |
-          docker build --build-arg ENVIRONMENT=PROD -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/audio-to-text:${{ github.sha }}" -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/audio-to-text:latest" ./audio-to-text
-          docker push "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/audio-to-text" --all-tags
+          docker build --build-arg ENVIRONMENT=PROD -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/audio-to-text:${{ github.sha }}" -t "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/audio-to-text:latest" ./audio-to-text
+          docker push "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/audio-to-text" --all-tags
 
       - name: Deploy Audio to Text
         id: 'deploy-audio-to-text'
         run: |
-          gcloud run deploy reflection-journal-audio-to-text \
+          gcloud run deploy honest-journal-audio-to-text \
           --region ${{ secrets.LOCATION }} \
-          --image "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/reflection-journal/audio-to-text:latest" \
+          --image "${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/honest-journal/audio-to-text:latest" \
           --allow-unauthenticated \
           --min-instances=0 \
           --max-instances=3 \
