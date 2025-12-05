@@ -27,6 +27,7 @@ steps:
       - '--allow-unauthenticated'
       - '--min-instances=0'
       - '--max-instances=3'
+      - '--gpu=1'
       - '--cpu=4'
       - '--memory=16Gi'
       - '--timeout=60'
