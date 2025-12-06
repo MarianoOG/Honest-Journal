@@ -77,21 +77,22 @@ def feedback_modal():
 def render_sidebar_footer():
     # Logout button in sidebar
     with st.sidebar:
-        col1, col2 = st.columns(2)
+        # col1, col2 = st.columns(2)
 
-        # Feedback button (primary action)
-        with col1:
-            if st.button("📝 Feedback", use_container_width=True, type="primary", help="Report issues or suggest features"):
-                feedback_modal()
+        # TODO: fix email
+        # # Feedback button (primary action)
+        # with col1:
+        #     if st.button("📝 Feedback", use_container_width=True, type="primary", help="Report issues or suggest features"):
+        #         feedback_modal()
 
         # Logout button
-        with col2:
-            if st.button("👋 Logout", use_container_width=True, help="Sign out"):
-                # Clear session state
-                for key in ['access_token', 'token_type', 'user_email']:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                st.rerun()
+        # with col2:
+        if st.button("👋 Logout", use_container_width=True, help="Sign out"):
+            # Clear session state
+            for key in ['access_token', 'token_type', 'user_email']:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
 
         # Compact warning
         st.caption("🚧 Under development — data saved to cloud")
