@@ -27,7 +27,7 @@ class Settings:
     GOOGLE_CLOUD_PROJECT_ID: str = os.getenv("GOOGLE_CLOUD_PROJECT_ID", "")
     PUBSUB_SUBSCRIPTION: str = os.getenv("PUBSUB_SUBSCRIPTION", "")
     SMTP_SERVER: str = os.getenv("SMTP_SERVER", "")
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", ""))
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
     SENDER_EMAIL: str = os.getenv("SENDER_EMAIL", "")
     SENDER_PASSWORD: str = os.getenv("SENDER_PASSWORD", "")
     RECIPIENT_EMAIL: str = os.getenv("RECIPIENT_EMAIL", "")
