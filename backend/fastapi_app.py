@@ -181,7 +181,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.title = "Honest Journal - Backend"
-app.version = "0.0.2"
+app.version = "0.0.3"
 
 # Include routers
 app.include_router(themes.router)

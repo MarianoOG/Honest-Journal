@@ -29,7 +29,7 @@ class Settings:
     SMTP_SERVER: str = os.getenv("SMTP_SERVER", "")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "465"))
     SENDER_EMAIL: str = os.getenv("SENDER_EMAIL", "")
-    SENDER_PASSWORD: str = os.getenv("SENDER_PASSWORD", "").strip('"')  # Remove quotes if present
+    SENDER_PASSWORD: str = os.getenv("SENDER_PASSWORD", "")
     RECIPIENT_EMAIL: str = os.getenv("RECIPIENT_EMAIL", "")
 
 # Global settings
