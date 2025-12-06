@@ -51,6 +51,9 @@ async def send_feedback(feedback: FeedbackRequest) -> dict:
             detail="Email service is not properly configured"
         )
 
+    # Debug log (without exposing the actual password)
+    logger.info(f"Attempting SMTP connection to {settings.SMTP_SERVER}:{settings.SMTP_PORT} with user {settings.SENDER_EMAIL}, password length: {len(settings.SENDER_PASSWORD)}")
+
     try:
         # Create message
         message = MIMEMultipart()
