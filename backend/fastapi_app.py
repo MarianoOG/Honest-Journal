@@ -156,9 +156,9 @@ async def lifespan(_: FastAPI):
 
     # Enable WAL mode for better concurrent access
     with Session(database_engine) as session:
-        session.exec(text("PRAGMA journal_mode=WAL;"))
-        session.exec(text("PRAGMA synchronous=NORMAL;"))  # Better performance with WAL
-        session.exec(text("PRAGMA busy_timeout=30000;"))  # 30 second busy timeout
+        session.exec(text("PRAGMA journal_mode=WAL;"))    # type: ignore
+        session.exec(text("PRAGMA synchronous=NORMAL;"))  # type: ignore
+        session.exec(text("PRAGMA busy_timeout=30000;"))  # type: ignore
         session.commit()
         logger.info("SQLite configured with WAL mode")
 
