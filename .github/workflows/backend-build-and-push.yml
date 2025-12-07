@@ -50,6 +50,4 @@ jobs:
           --min-instances=0 \
           --max-instances=1 \
           --project ${{ secrets.PROJECT_ID }} \
-          --set-env-vars="AI_WORKER_URL=${{ secrets.AI_WORKER_URL }},AI_WORKER_API_KEY=${{ secrets.AI_WORKER_API_KEY }},PUBSUB_SUBSCRIPTION=${{ secrets.PUBSUB_SUBSCRIPTION }},GOOGLE_CLOUD_PROJECT_ID=${{ secrets.PROJECT_ID }},DATABASE_URL=sqlite:///db/reflexion.db,SMTP_SERVER=${{ secrets.SMTP_SERVER }},SMTP_PORT=${{ secrets.SMTP_PORT }},SENDER_EMAIL=${{ secrets.SENDER_EMAIL }},SENDER_PASSWORD=${{ secrets.SENDER_PASSWORD }},RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" \
-          --add-volume="name=db,type=cloud-storage,bucket=${{ secrets.BUCKET_NAME }}/db" \
-          --add-volume-mount="volume=db,mount-path=/app/db"
+          --set-env-vars="AI_WORKER_URL=${{ secrets.AI_WORKER_URL }},AI_WORKER_API_KEY=${{ secrets.AI_WORKER_API_KEY }},PUBSUB_SUBSCRIPTION=${{ secrets.PUBSUB_SUBSCRIPTION }},GOOGLE_CLOUD_PROJECT_ID=${{ secrets.PROJECT_ID }},DATABASE_URL=sqlite:///db/reflexion.db,SMTP_SERVER=${{ secrets.SMTP_SERVER }},SMTP_PORT=${{ secrets.SMTP_PORT }},SENDER_EMAIL=${{ secrets.SENDER_EMAIL }},SENDER_PASSWORD=${{ secrets.SENDER_PASSWORD }},RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}"
