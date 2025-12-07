@@ -47,6 +47,11 @@ primaryColor = "#0B5FCC"  # Electric Blue - consistent
 textColor = "#4A4A4A"  # Charcoal
 linkColor = "#0B5FCC"  # Electric Blue
 
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
 [browser]
 gatherUsageStats = false
 
