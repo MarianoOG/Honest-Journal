@@ -5,7 +5,7 @@ import json
 
 # Third-party imports
 from fastapi import FastAPI
-from sqlmodel import create_engine, Session, select
+from sqlmodel import create_engine, Session, select, text
 from google.cloud import pubsub_v1
 import uvicorn
 
@@ -144,7 +144,24 @@ async def lifespan(_: FastAPI):
     """
     # Startup
     global database_engine
-    database_engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
+    database_engine = create_engine(
+        settings.DATABASE_URL,
+        connect_args={
+            "check_same_thread": False,
+            "timeout": 30.0  # Increase timeout for busy database
+        },
+        pool_pre_ping=True,  # Verify connections before using
+        pool_recycle=3600,  # Recycle connections after 1 hour
+    )
+
+    # Enable WAL mode for better concurrent access
+    with Session(database_engine) as session:
+        session.exec(text("PRAGMA journal_mode=WAL;"))
+        session.exec(text("PRAGMA synchronous=NORMAL;"))  # Better performance with WAL
+        session.exec(text("PRAGMA busy_timeout=30000;"))  # 30 second busy timeout
+        session.commit()
+        logger.info("SQLite configured with WAL mode")
+
     create_db_and_tables(database_engine)
     logger.info("Application started with connection to the database")
 
