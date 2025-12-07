@@ -130,21 +130,19 @@ def render_metadata(reflection: dict):
         st.info("No themes assigned")
 
     # Render parent and children relationships
-    st.markdown("### 🔗 Relationships")
+    st.markdown("### 🔗 Linked Reflections")
     
     # Render parent
     parent = get_reflection_parent(reflection["id"])
     if parent:
-        if st.button(f"⬆️ PARENT: {truncate_text(parent['question'], 65)}", key="parent_btn", use_container_width=True):
+        if st.button(f"⬆️ Started From: {truncate_text(parent['question'], 60)}", key="parent_btn", use_container_width=True):
             st.session_state.current_reflection_id = parent["id"]
             st.rerun()
-    else:
-        st.info("This entry has no parent")
 
     # Render Children
     children = get_reflection_children(reflection["id"])
     if children:
-        with st.expander(f"⬇️ Children ({len(children)})", expanded=True):
+        with st.expander(f"⬇️ Follow-up Questions ({len(children)})", expanded=True):
             for i, child in enumerate(children):
                 emoji = get_reflection_emoji(child)
                 if st.button(f"{emoji} {truncate_text(child['question'], 40)}", key=f"child_{i}", use_container_width=True):
@@ -153,7 +151,7 @@ def render_metadata(reflection: dict):
                     st.session_state.mode = "edit" if not child.get("answer") else "view"
                     st.rerun()
     else:
-        st.info("This entry has no children")
+        st.info("No follow-up questions yet")
 
 def render_actions(reflection: dict):
     """Render action buttons"""
